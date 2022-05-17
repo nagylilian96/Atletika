@@ -1,0 +1,49 @@
+Zsivoczky Attila	2000	 Belgium	Gent	Csak teszt	4
+Ajkler Zita	2000	 Belgium	Gent	távolugrás	0
+Korányi Balázs	2000	 Belgium	Gent	800 m	3
+Németh Roland	2000	 Belgium	Gent	60 m	5
+Czingler Zsolt	2000	 Belgium	Gent	hármasugrás	4
+Szabó Ambrus	2000	 Belgium	Gent	hármasugrás	7
+Vaszi Tünde	2000	 Belgium	Gent	távolugrás	5
+Kürty Lajos	2002	 Ausztria	Bécs	hétpróba	6
+Zsivoczky Attila	2002	 Ausztria	Bécs	hétpróba	5
+Gyorffy Dóra	2002	 Ausztria	Bécs	magasugrás	2
+Ajkler Zita	2002	 Ausztria	Bécs	távolugrás	6
+Vaszi Tünde	2002	 Ausztria	Bécs	rúdugrás	0
+Zsivoczky Attila	2005	 Spanyolország	Madrid	hétpróba	5
+Papp Krisztina	2005	 Spanyolország	Madrid	3000 m	6
+Vaszi Tünde	2005	 Spanyolország	Madrid	távolugrás	0
+Tölgyesi Péter	2005	 Spanyolország	Madrid	hármasugrás	7
+Takács Dávid	2007	 Nagy-Britannia	Birmingham	800 m	6
+Bene Barnabás	2007	 Nagy-Britannia	Birmingham	1500 m	5
+Márton Anita	2009	 Olaszország	Torino	súlylökés	0
+Baji Balázs	2009	 Olaszország	Torino	60 m gát	0
+Kürty Lajos	2009	 Olaszország	Torino	súlylökés	5
+Takács Dávid	2009	 Olaszország	Torino	800 m	0
+Bene Barnabás	2009	 Olaszország	Torino	1500 m	0
+Márton Anita	2011	 Franciaország	Párizs	súlylökés	5
+Baji Balázs	2011	 Franciaország	Párizs	60 m gát	0
+Kürty Lajos	2011	 Franciaország	Párizs	súlylökés	0
+Márton Anita	2013	 Svédország	Göteborg	súlylökés	0
+Baji Balázs	2013	 Svédország	Göteborg	60 m gát	8
+Márton Anita	2015	 Csehország	Prága	súlylökés	1
+Farkas Györgyi	2015	 Csehország	Prága	ötpróba	6
+Baji Balázs	2015	 Csehország	Prága	60 m gát	7
+Szabó Barbara	2015	 Csehország	Prága	magasugrás	8
+Krizsán Xénia	2017	 Szerbia	Belgrád	ötpróba	4
+Kozák Luca	2017	 Szerbia	Belgrád	60 m gát	0
+Márton Anita	2017	 Szerbia	Belgrád	súlylökés	1
+Kerekes Gréta	2017	 Szerbia	Belgrád	60 m gát	0
+Farkas Györgyi	2017	 Szerbia	Belgrád	ötpróba	3
+Baji Balázs	2017	 Szerbia	Belgrád	60 m gát	0
+Krizsán Xénia	2019	 Nagy-Britannia	Glasgow	ötpróba	7
+Kozák Luca	2019	 Nagy-Britannia	Glasgow	60 m gát	0
+Márton Anita	2019	 Nagy-Britannia	Glasgow	súlylökés	3
+Kerekes Gréta	2019	 Nagy-Britannia	Glasgow	60 m gát	5
+Szögi István	2021	 Lengyelország	Torun	1500 m	8
+Jankovics Dániel	2021	 Lengyelország	Torun	magasugrás	8
+Krizsán Xénia	2021	 Lengyelország	Torun	ötpróba	3
+Kozák Luca	2021	 Lengyelország	Torun	60 m gát	8
+Nemes Rita	2021	 Lengyelország	Torun	ötpróba	6
+Kerekes Gréta	2021	 Lengyelország	Torun	60 m gát	0
+Baji Balázs	2021	 Lengyelország	Torun	60 m gát	0
