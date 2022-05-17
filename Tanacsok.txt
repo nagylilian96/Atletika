@@ -1,0 +1,415 @@
+C#
+
+Visual Code 2022
+
+WPF Application .Net
+
+Nevet adok
+6-os framework (különben nem lesznek a package-ek kompatibilisek)
+
+NuGet Package Manager-t előhozom jobb gombbal kattintva a projekt nevén
+6db kell:
+keresőbe EntityFramework
+
+1. EntityFrameworkCore
+2. EntityFrameworkAbstractions
+3. EntityFrameworkProxies
+4. EntityFrameworkRelational
+5. EntityFrameworkSqlServer
+6. EntityFrameworkTools
+
+(Package Manager Console -> Tools/Nuget Package Manager/Package Manager Console)
+
+(ha sikerül MsSQL reverse engineering => package manager console-ba bemásolni:
+	Scaffold-DbContext "Server=.\sqlexpress;Database=AtletikaDb;Trusted_Connection=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -ContextDir Context -Context AppDbContext
+
+(serverhez csatlakozásnál látjuk mit másoljunk, database neve)
+-ha nem megy, modellek létrehozása => add new folder (Models) => add new class (public), táblák importja ctrl + .
+
+
+Első lépésben létrehozzuk a modelleket, amik igazából egy-egy táblát képeznek le az adatbázisból
+
+Kell nekik egy Modells mappa
+
+Projekt nevén jobb gomb -> Add.../Class...
+
+Pl.: Helyszín tábla leképezése
+
+[Table("Helyszin")]
+
+public class Helyszin
+    {
+        [Key]
+        public int HelyID { get; set; }
+
+        public int Ev { get; set; }
+       
+        public string Orszag { get; set; }
+	    public string Varos { get; set; }
+
+        public Helyszin()
+        {
+        }
+
+        public Helyszin(int helyID, int ev, string orszag, string varos)
+        {
+            HelyID = helyID;
+            Ev = ev;
+            Orszag = orszag;
+            Varos = varos;
+        }
+    }
+
+[Table("Eredmenyek")]
+
+public class Eredmenyek
+    {
+        [ForeignKey("Helyszin")]
+        public int HelyID { get; set; }
+        public virtual Helyszin Helyszin { get; set; } //virtuális adattagok, ezek segítségével érjük el az Eredmények objektumból a Helyszin tábla (osztály) és a Versenyzo (osztály) tábla minden adatát is, ezeken a külső kulcsokon keresztül kapcsolódik az Eredmények tábla a Helyszin és a Versenyszam táblához
+
+        [ForeignKey("Versenyzo")]
+        public int VersID { get; set; }
+        public virtual Versenyzo Versenyzo { get; set; }
+
+        public string Versenyszam { get; set; }
+
+        public int? Helyezes { get; set; } //akkor kell mögé ? ha az értéke lehet null
+
+    }
+
+-eredmények.cs-be 2 foreign key (helyszin) és (versenyző),hogy elérjük őket
+
+Kövi lépés AppDbContext létrehozása (de igazából bminek nevezhetjük), ez mehet a Models mappába vagy külön egy Context mappába
+
+public class AppDbContext : DbContext //örökli a DbContextet, importálni kell az EntityFrameworkCoreból tudjuk behúzni
+Ezután meg kell adni azokat a halmazokat, melyek a táblát mutatájk be nekünk:
+    {
+       public DbSet<Versenyzo> Versenyzok { get; set; }
+
+       public DbSet<Helyszin> Helyszinek { get; set; }
+
+       public DbSet<Eredmenyek> Eredmenyek { get; set; }
+
+Csatlakozni kell az adatbázishoz, azaz meg kell adni a connection stringet:
+
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+	    base.OnConfiguring(optionsBuilder); // az ős osztálynak (vagyis a DbContextnek a konstruktora)
+            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=AtletikaDB;Trusted_Connection=True"); //be kell állítani, h sql servert szeretnénk használni, ez a kapcsolási string
+            optionsBuilder.UseLazyLoadingProxies(); //ezzel tudjuk használni az idegen kulccsal össezkötött két táblát
+        }
+
+Most leírjuk a táblák közti kapcsolatokat:
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Eredmenyek>().HasOne(x => x.Helyszin);
+            modelBuilder.Entity<Eredmenyek>().HasOne(x => x.Versenyzo);
+
+             modelBuilder.Entity<Eredmenyek>().HasKey(model =>new
+            {
+                model.VersId,
+                model.HelyId
+            }); // ez azért kell, mert összetett kulcsunk van (helyszin és versenyzo) és nincs olyan mező, ami egyértelműen meghatározná az elsődleges kulcsot az Eredmenyek táblában
+        }
+
+Ezután jöhet a grafikus alkalmazás kialakítása:
+
+MainWindow.xaml
+
+Honnan szedje az adatokat vagyis melyik model adatait jelenítjük meg az űrlapban:
+<Window.DataContext>
+	<model:Eredmenyek />
+</Window.DataContext>
+
+Felülre behúzni az elérési utat:xmlns:model="clr-namespace:Atletika.Models"
+Ugyan itt lehet nevet adni a projektnek: Title="Aminek el kell nevezni"
+A grafikus alkalmazás mérete: Pl.: Height="350" Width="400">
+
+
+Létrehozzuk a kívánt mennyiségű oszlopot és sort.
+
+Minden oszlop és sor a griden belül van, ezzel kezdődik és fejeződik be a grafikus alkalmazás:
+<Grid>
+</Grid>
+
+Pl.: ha sorokat szeretnék kialakítani:
+<Grid.RowDefinitions>
+     <RowDefinition MaxHeight="50"/> //milyen magas legyen egy sor
+     <RowDefinition MaxHeight="50"/>
+		.
+		.
+		.
+</Grid.RowDefinitions>
+
+Pl.: ha oszlopokra szeretnénk bontani:
+<Grid.ColumnDefinitions>
+       <ColumnDefinition Width="193*" /> //milyen széles legyen egy oszlop
+       <ColumnDefinition Width="200*" />
+</Grid.ColumnDefinitions>
+
+Az elemeket StackPanelbe tesszük bele, így helyezzük fel a gridre. Ez úgy működik, mint egy div, körbeveszi az elemeket.
+<StackPanel Grid.Row="0" Grid.Column="0" //melyik sor melyik oszlopába kerül az adott elem
+Orientation="Vertical" //egymás alá teszi az ebben a "cellában" lévő elemeket
+Margin="5">
+<Label x:Name="Feliratneve pl.:lblHelyszin ->a modell melyik adata jelenik itt meg, kb mint a className, ezzel hivatkozunk majd rá a progiban" Content="Maga a megjelenő szöveg pl.:Helyszin"/>
+
+Ha alá comboboxot szeretnénk, ez a lenyíló menü:
+<ComboBox x:Name="cbHelyszin" 	 //ez is arra szolgál, h a kódban majd ezen a néven hivatkozhassunk rá
+            ItemsSource="{ 		//ebbe a részbe szerepel a kapcsolat definiálása
+              Binding Mode=TwoWay, 	//kétirányú kapcsolat, ha az adatbázisban változik vmi, akkor a grafikus felületen is és fordítva
+              Path=Helyszin, 		//honnan vegye az adatokat
+              RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}
+		}" 	//ezt a sort még a tanár sem érti, de be kell magolni
+            DisplayMemberPath="Varos"	//az osztály adattagjai közül melyiket szeretném kilistázni a lenyíló menüben
+            SelectedValuePath="HelyId" //mi alapján tárolja el (azonosítja be), h melyik adat lett kiválasztva, hát itt az id alapján
+	    SelectedItem="{Binding Path=Helyszin}" //a kiválasztott elemet a modell mely adattagjához rendeljük hozzá
+            SelectedValue="{Binding Path=HelyId}" //mi pontosan a kiválasztott érték
+            Text="Válassz helyszínt"/>
+</StackPanel> //ha ebbe a divbe több elemet már nem szeretnénk belepakolni, akkor le kell zárni
+
+Ha szöveg beviteli mezőt szeretnék beszúrni:
+
+<StackPanel Grid.Row="hányadik sorba" Grid.Column="hányadik oszlopba"
+            Orientation="Vertical"
+            Margin="5">
+     <Label x:Name="lblVersenyszam" Content="Versenyszám" />
+     <TextBox x:Name="txtVersenyszam" 
+              Text="{Binding Mode=TwoWay, Path=Versenyszam}"/>
+</StackPanel>
+
+Ha képet szeretnénk beszúrni: ezt nem kell StackPanelbe tenni
+<Image Source="./sport.png" 	//be kell másolni a képet a projekt mappájába
+               Grid.Column="2" 	//meghatározzuk, hogy melyik oszlopba
+               Grid.Row="0"	//és melyik sorba kerüljön
+               Grid.RowSpan="6"	//hány sort foglaljon el
+               Margin="5"	//szegélye legyen-e?
+               VerticalAlignment="Stretch" //függőlegesen és
+               HorizontalAlignment="Stretch"	//vízszintesen is foglalja el a teret, magyarul töltse ki a teret
+               />
+Ha gombra van szükségünk:
+<StackPanel Grid.Row="3" Grid.Column="0"
+                    Orientation="Vertical"
+                    VerticalAlignment="Center"
+                    Margin="5">
+            <Button x:Name="btnOk"
+                    Content="Ok"
+                    Click="OnOkClick"
+                    Height="50"
+                    Width="100"
+            />
+</StackPanel>
+
+
+Ahhoz hogy a lenyíló menübe betöltődjenek az adatok, kell egy OnLoad függvény: (kb mint a useEffect és a fetch)
+ezt is felülre kell behúzni, mondjuk a Title alá:
+Loaded="OnLoad" 
+>		//vigyázzunk, hogy a lezáró kacsacsőrön belül legyen!!!
+
+MainWindow.xaml.cs ide írjuk a függvényeket, és a megíráshoz példányosítanunk kell az adatbázist:
+
+private AppDbContext _appDbContext; // ezt legfölülre kell írni, az össezs fv fölé, mert így mindegyik tudja használni, importálni kell a Models-ből
+
+private void OnLoad(object sender, RoutedEventArgs e)
+        {
+          using(_appDbContext = new AppDbContext()) //itt példányosítjuk ezt a private fieldet, amit az AppDbContext példányosításával létrehoztunk, így férünk hozzá az adatbázis tábláihoz az AppDbContexten-n keresztül 
+            {
+                cbHelyszin.ItemsSource = _appDbContext.Helyszinek.ToList();
+                cbVersenyzo.ItemsSource = _appDbContext.Versenyzok.ToList(); //a ComboBoxok nevét meghívom és megmondom, hogy honnan származó adatokkal töltse fel a legördülő mezőt
+            }
+        }
+
+A Mentés gombnak is meg kell írni az OnOkClick függvényét: //igazából bhogy elnevezhetem a fv-t
+
+private void OnOkClick(object sender, RoutedEventArgs e)
+        {
+            Eredmenyek data = (Eredmenyek) DataContext; //itt adjuk meg, hogy hol tárolja az űrlapon kiválasztott, beírt adatokat
+
+            try
+            {
+                using (_appDbContext = new AppDbContext()) //példányosítani kell itt is
+                {
+                    Eredmenyek record = _appDbContext.Eredmenyek.Single(x => x.VersId == data.VersId && x.HelyId == data.HelyId); //ki kell keresni azt a rekordot, amit módosítani szeretnénk
+                    record.Versenyszam = data.Versenyszam;
+
+                    _appDbContext.SaveChanges();
+                    
+                    MessageBox.Show("Sikeres módosítás","",MessageBoxButton.OK);
+
+                    data.Vsenyszam = string.Empty;
+                    cbHelyszin.SelectedIndex = -1;
+                    cbVersenyzo.SelectedIndex = -1;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Nem volt sikeres a módosítás", "", MessageBoxButton.OK);
+            }
+        }
+
+Ha szeretnénk szöveges állományba exportálni:
+
+private void OnExportClick (object sender, RoutedEventArgs e)
+        {
+            List<Eredmenyek> eredmenyek = null;	//üres halmaz, amibe majd elmentődnek az adatok, azért kell ide kívülre, hogyha lefut a using, akkor is megmaradnak az adatok a változóban
+
+            using (_appDbContext = new AppDbContext()) //példányosítás
+            {
+               eredmenyek = _appDbContext.Eredmenyek //mely adatokkal töltse fel az eredmenyek listát, plusz hozzáfűzi a két másik táblát az Include fv-nyel
+                                         .Include("Helyszin")
+                                         .Include("Versenyzo")
+                                         .ToList();
+            }
+
+            List<string> kimenet = new List<string>(); //a kiíratáshoz létre kell hozni egy string típusú listát
+            string sor = string.Empty;
+
+            foreach(Eredmenyek eredmeny in eredmenyek) //végigmegyünk minden adatsoron és megformázzuk, hogy hogy nézzen ki egy+ kimentett sor
+            {
+                sor = $"{eredmeny.Versenyzo.Nev}\t{eredmeny.Helyszin.Ev}\t{eredmeny.Helyszin.Orszag}\t{eredmeny.Helyszin.Varos}\t{eredmeny.Versenyszam}\t{(eredmeny.Helyezes.HasValue ? eredmeny.Helyezes : 0)}"; //itt az utolsó azért ilyen bonyolult, mert lehet itt null is az érték, azt mondjuk neki, hogy ha nincs értéke (azaz null van ott), akkor helyettesítse egy 0-val
+
+                kimenet.Add(sor);
+            }
+
+            File.WriteAllLines("eredmenyek.txt", kimenet);	//soronként hozzáadjuk az adatokat a kimenethez és kiiratjuk. Első paraméter a mi legyen a fájl neve, ahová kiírja a progi, második, h mit írjon ki
+            MessageBox.Show("sikeres export", "", MessageBoxButton.OK);
+        }
+
+A grafikus alkalmazás MainWindow.xaml.cs fájlja egészben így néz ki:
+
+using Atletika2.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Windows;
+
+
+namespace Atletika2
+{
+    public partial class MainWindow : Window
+    {
+
+        private AppDbContext _appDbContext;
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void OnLoad(object sender, RoutedEventArgs e)
+        {
+            using(_appDbContext = new AppDbContext())
+            {
+                cbHelyszin.ItemsSource = _appDbContext.Helyszinek.ToList();
+                cbVersenyzo.ItemsSource = _appDbContext.Versenyzok.ToList();
+            }
+        }
+
+        private void OnOkClick(object sender, RoutedEventArgs e)
+        {
+            Eredmenyek data = (Eredmenyek) DataContext;
+
+            try
+            {
+                using (_appDbContext = new AppDbContext())
+                {
+                    Eredmenyek record = _appDbContext.Eredmenyek.Single(x => x.VersId == data.VersId && x.HelyId == data.HelyId);
+
+                    record.Versenyszam = data.Versenyszam;
+
+                    _appDbContext.SaveChanges();
+
+                    MessageBox.Show("Sikeres módosítás", "", MessageBoxButton.OK);
+
+                    data.Versenyszam = string.Empty;
+                    cbHelyszin.SelectedIndex = -1;
+                    cbVersenyzo.SelectedIndex = -1;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Nem volt sikeres a módosítás", "", MessageBoxButton.OK);
+            }
+        }
+
+        private void OnExportClick(object sender, RoutedEventArgs e)
+        {
+            List<Eredmenyek> eredmenyek = null;
+
+            using (_appDbContext = new AppDbContext())
+            {
+                eredmenyek = _appDbContext.Eredmenyek
+                                          .Include(x => x.Helyszin)
+                                          .Include(x => x.Versenyzo)
+                                          .ToList();
+            }
+
+            List<string> kimenet = new List<string>();
+            string sor = string.Empty;
+
+            foreach (Eredmenyek eredmeny in eredmenyek)
+            {
+                sor = $" {eredmeny.Versenyzo.Nev}\t {eredmeny.Helyszin.Ev}\t {eredmeny.Helyszin.Orszag}\t {eredmeny.Helyszin.Varos}\t{eredmeny.Versenyszam}\t{(eredmeny.Helyezes.HasValue ? eredmeny.Helyezes : 0)}";
+
+                kimenet.Add(sor);
+            }
+
+            File.WriteAllLines("eredmenyek.txt", kimenet);
+            MessageBox.Show("Sikeres export", "", MessageBoxButton.OK);
+        }
+    }
+}
+
+
+
+A példában a konzolos alkalmazásban megszületett txt-t használtuk fel egy ConsoleApp-hez.
+
+ConsoleApp hozzáadása a meglévő Solution-höz:
+jobb gomb a Solution-ön: Add new project - onnantól a szokásos
+
+Be kell másolni az adatbázist az alkalmazásba, utána megnyit megnéz milyen adatok vannak benne és ezt lemodellez, jelen esetben van az eredemenyek txt-ben:
+
+versenyzo neve, évszám, ország, város, versenyszám, helyezés
+
+Ennek a modellje:
+
+Eredmeny.cs:
+public class Eredmeny
+    {
+      public string Nev { get; set; }
+      public int Ev { get; set; }
+      public string Orszag { get; set; }
+      public string Varos { get; set; }
+      public string Versenyszam { get; set; }
+      public int Helyezes { get; set; }
+    }
+
+Ezután be kell olvasnunk a fájlt:
+
+void Beolvasas()
+{
+    Eredmeny eredmeny = null; //minden sorból kell csinálni egy eredményt, vagyis tovább kell bontani
+    string[] egySorAdatai = null; //string típusú tömb
+
+
+    string[] allLines = File.ReadAllLines("eredmenyek.txt"); //beolvassa a szöveges állomány minden egyes sorát, minden egyes elem ebben a tömbben egy sor 
+
+    foreach (string line in allLines) //végig kell lépkedni az összes soron egyesével és minden egyes sort szét kell darabolni
+    {
+        egySorAdatai = line.Split('\t'); //a tabulátornál darabolom fel, mert az exportálásnál úgy állítottam be, hogy tabulátor legyen az egyes adatok között
+
+        eredmeny = new Eredmeny(); //megmondom, hogy az Eredmeny osztály melyik adattagja a sor hányadik eleme.
+        eredmeny.Nev = egySorAdatai[0];
+        eredmeny.Ev = int.Parse(egySorAdatai[1]); //alapból stringek érkeznek, tehát amitől azt várjuk, hogy szám legyen, azt át kell alakítani számmá
+        eredmeny.Orszag = egySorAdatai[2];
+        eredmeny.Varos = egySorAdatai[3];
+        eredmeny.Versenyszam = egySorAdatai[4];
+        eredmeny.Helyezes = int.Parse(egySorAdatai[5]);
+
+        eredmenyek.Add(eredmeny);
+    }
+}
+
+
